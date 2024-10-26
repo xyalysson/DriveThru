@@ -1,0 +1,234 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>DriveThru</title>
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600&display=swap">
+    <style>
+        body {
+            font-family: 'Poppins', sans-serif;
+            text-align: center;
+            background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+            margin: 0;
+            padding: 0;
+        }
+        h1 {
+            color: #343a40;
+            font-size: 2.5em;
+            margin-top: 20px;
+        }
+        h2 {
+            color: #007bff;
+            font-size: 2em;
+            margin-bottom: 20px;
+        }
+        .container {
+            display: flex;
+            justify-content: center;
+            flex-wrap: wrap;
+        }
+        .option {
+            display: inline-block;
+            padding: 20px;
+            margin: 15px;
+            border: 2px solid #007bff;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: background-color 0.3s, transform 0.3s, box-shadow 0.3s;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+            background-color: white;
+        }
+        .option:hover {
+            background-color: #007bff;
+            color: white;
+            transform: translateY(-5px);
+            box-shadow: 0 8px 16px rgba(0, 0, 0, 0.2);
+        }
+        .selected {
+            background-color: green;
+            color: white;
+        }
+        button {
+            background-color: #007bff;
+            border: none;
+            color: white;
+            padding: 15px 32px;
+            text-align: center;
+            text-decoration: none;
+            display: inline-block;
+            font-size: 16px;
+            margin-top: 20px;
+            cursor: pointer;
+            border-radius: 8px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+            transition: background-color 0.3s, transform 0.3s;
+        }
+        button:hover {
+            background-color: #0056b3;
+            transform: translateY(-3px);
+        }
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 1;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            overflow: auto;
+            background-color: rgb(0, 0, 0);
+            background-color: rgba(0, 0, 0, 0.4);
+            padding-top: 60px;
+        }
+        .modal-content {
+            background-color: white;
+            margin: 5% auto;
+            padding: 20px;
+            border: 1px solid #888;
+            width: 80%;
+            border-radius: 8px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+        }
+        .close {
+            color: #aaa;
+            float: right;
+            font-size: 28px;
+            font-weight: bold;
+        }
+        .close:hover,
+        .close:focus {
+            color: black;
+            text-decoration: none;
+            cursor: pointer;
+        }
+        #alertModal {
+            display: none;
+            position: fixed;
+            z-index: 1;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            overflow: auto;
+            background-color: rgb(0, 0, 0);
+            background-color: rgba(0, 0, 0, 0.4);
+            padding-top: 60px;
+        }
+        #alertModal .modal-content {
+            width: 300px;
+            padding: 20px;
+            text-align: center;
+        }
+        @media screen and (max-width: 600px) {
+            .option {
+                padding: 10px;
+                margin: 10px;
+            }
+            button {
+                padding: 10px 20px;
+                font-size: 14px;
+            }
+            .modal-content {
+                width: 90%;
+            }
+        }
+    </style>
+</head>
+<body>
+    <h1>Bem-vindo ao DriveThru!</h1>
+    <h2>Escolha sua comida:</h2>
+    <div class="container" id="foodOptions">
+        <div class="option" onclick="selectOption(this, 'Pão de queijo', 'food')"> Pão de queijo</div>
+        <div class="option" onclick="selectOption(this, 'Pastel', 'food')"> Pastel</div>
+        <div class="option" onclick="selectOption(this, 'Brownie', 'food')"> Brownie</div>
+        <div class="option" onclick="selectOption(this, 'Cookie', 'food')"> Cookie</div>
+    </div>
+    <h2>Escolha sua bebida:</h2>
+    <div class="container" id="drinkOptions">
+        <div class="option" onclick="selectOption(this, 'Expresso', 'drink')">Expresso</div>
+        <div class="option" onclick="selectOption(this, 'Cappuccino', 'drink')"> Cappuccino</div>
+        <div class="option" onclick="selectOption(this, 'Guaraná', 'drink')"> Guaraná</div>
+    </div>
+    <button onclick="showConfirmation()">Enviar Pedido</button>
+    <!-- Confirmation Modal -->
+    <div id="confirmationModal" class="modal">
+        <div class="modal-content">
+            <span class="close" onclick="closeModal()">&times;</span>
+            <h2>Confirmação do Pedido</h2>
+            <p id="orderSummary"></p>
+            <button onclick="confirmOrder()">Confirmar Pedido</button>
+        </div>
+    </div>
+    <!-- Alert Modal -->
+    <div id="alertModal" class="modal">
+        <div class="modal-content">
+            <h2>Selecione algo</h2>
+            <button onclick="closeAlertModal()">OK</button>
+        </div>
+    </div>
+    <script>
+        let selectedFood = '';
+        let selectedDrink = '';
+        const foodElements = document.querySelectorAll('#foodOptions .option');
+        const drinkElements = document.querySelectorAll('#drinkOptions .option');
+
+        function selectOption(element, option, type) {
+            if (type === 'food') {
+                if (selectedFood === option) {
+                    selectedFood = '';
+                    element.classList.remove('selected');
+                } else {
+                    selectedFood = option;
+                    foodElements.forEach(el => el.classList.remove('selected'));
+                    element.classList.add('selected');
+                }
+            } else if (type === 'drink') {
+                if (selectedDrink === option) {
+                    selectedDrink = '';
+                    element.classList.remove('selected');
+                } else {
+                    selectedDrink = option;
+                    drinkElements.forEach(el => el.classList.remove('selected'));
+                    element.classList.add('selected');
+                }
+            }
+        }
+
+        function showConfirmation() {
+            if (selectedFood || selectedDrink) {
+                const foodMessage = selectedFood ? `Comida: ${selectedFood}` : "Nenhuma comida selecionada";
+                const drinkMessage = selectedDrink ? `Bebida: ${selectedDrink}` : "Nenhuma bebida selecionada";
+                document.getElementById('orderSummary').innerText = `${foodMessage}\n${drinkMessage}`;
+                document.getElementById('confirmationModal').style.display = "block";
+            } else {
+                document.getElementById('alertModal').style.display = "block";
+            }
+        }
+
+        function closeModal() {
+            document.getElementById('confirmationModal').style.display = "none";
+        }
+
+        function closeAlertModal() {
+            document.getElementById('alertModal').style.display = "none";
+        }
+
+        function confirmOrder() {
+            alert(`Pedido confirmado!\n\nComida: ${selectedFood}\nBebida: ${selectedDrink}`);
+            selectedFood = '';
+            selectedDrink = '';
+            foodElements.forEach(el => el.classList.remove('selected'));
+            drinkElements.forEach(el => el.classList.remove('selected'));
+            closeModal();
+        }
+
+        window.onclick = function(event) {
+            const modal = document.getElementById('confirmationModal');
+            if (event.target === modal) {
+                modal.style.display = "none";
+            }
+        }
+    </script>
+</body>
+</html>
